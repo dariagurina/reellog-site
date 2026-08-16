@@ -57,7 +57,7 @@ header a {
 header a:hover { color: var(--text-secondary); }
 header a.active { color: var(--text-primary); }
 
-/* --- Landing --- */
+/* --- Landing: minimal one-screen hero (the maker's ref) --- */
 
 .hero {
   flex: 1;
@@ -66,17 +66,18 @@ header a.active { color: var(--text-primary); }
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 48px 24px;
+  /* Extra bottom padding lifts the centered composition a touch above
+     true center — where the eye expects it. */
+  padding: 48px 24px calc(48px + 12vh);
 }
 
-.hero .star {
-  color: var(--gold);
-  font-size: 28px;
-  margin-bottom: 8px;
-  line-height: 1;
-  text-shadow:
-    0 0 14px rgba(230, 197, 106, 0.55),
-    0 0 44px rgba(230, 197, 106, 0.22);
+.hero .mark {
+  width: 108px;
+  height: 108px;
+  margin-bottom: 24px;
+  animation:
+    fadeIn 0.5s ease-out both,
+    spinIn 1.8s cubic-bezier(0.15, 0.6, 0.2, 1) both;
 }
 
 .hero h1 {
@@ -84,29 +85,101 @@ header a.active { color: var(--text-primary); }
   font-size: 40px;
   font-weight: 700;
   letter-spacing: -0.5px;
-  margin-bottom: 16px;
   line-height: 1.15;
+  margin-bottom: 6px;
+  animation: rise 0.6s ease-out 1.2s both;
 }
 
 .hero .tagline {
-  color: var(--text-secondary);
-  font-size: 19px;
+  color: var(--text-muted);
+  font-size: 17px;
   line-height: 1.4;
-  max-width: 26em;
+  animation: rise 0.6s ease-out 1.2s both;
 }
 
 .hero .tagline-sub {
   color: var(--text-muted);
-  font-size: 16px;
-  margin-top: -4px;
+  font-size: 14px;
+  margin-top: 4px;
   line-height: 1.4;
   max-width: 28em;
+  animation: rise 0.6s ease-out 1.2s both;
 }
 
-.hero .soon {
-  color: var(--text-muted);
-  font-size: 14px;
-  margin-top: 18px;
+/* The rating stars — empty row rises with the text; gold sweeps
+   left to right, exactly the app's launch moment. Flat, no glow. */
+
+.stars {
+  position: relative;
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 17px;
+  line-height: 1;
+  letter-spacing: 7px;
+  animation: rise 0.6s ease-out 1.2s both;
+}
+
+.stars-base { color: #3a3a42; }
+
+.stars-gold {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--gold);
+  animation: sweep 0.8s cubic-bezier(0.3, 0.4, 0.2, 1) 1.9s both;
+}
+
+/* Once the pour completes, the stars come alive — a separate glowing
+   layer (the sweep layer clips its own shadow) fading in on top. */
+.stars-shine {
+  position: absolute;
+  top: 0;
+  left: 0;
+  white-space: nowrap;
+  color: var(--gold);
+  text-shadow:
+    0 0 10px rgba(230, 197, 106, 0.55),
+    0 0 32px rgba(230, 197, 106, 0.25);
+  animation: fadeIn 0.9s ease-out 2.75s both;
+}
+
+/* The app's launch choreography at landing tempo: reel spins in,
+   the text block rises, gold pours across the stars. */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes spinIn {
+  from { transform: rotate(-360deg); }
+  to   { transform: rotate(0deg); }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes sweep {
+  from { width: 0; }
+  to   { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero .mark, .hero h1, .hero .tagline, .hero .tagline-sub,
+  .hero .stars, .stars-gold, .stars-shine {
+    animation: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .hero h1 { font-size: 32px; }
+  .hero .tagline { font-size: 17px; }
+  .hero .mark { width: 92px; height: 92px; margin-bottom: 30px; }
 }
 
 /* --- Content pages --- */
@@ -171,8 +244,3 @@ footer a {
   margin: 0 10px;
 }
 footer a:hover { color: var(--text-secondary); }
-
-@media (max-width: 480px) {
-  .hero h1 { font-size: 32px; }
-  .hero .tagline { font-size: 17px; }
-}
