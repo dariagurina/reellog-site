@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ReelLog — Watch. Rate. Remember.</title>
+  <meta name="description" content="A film shared from ReelLog, the personal movie diary for iPhone.">
+
+  <!-- Link-preview card (messengers read only these fixed lines — they never
+       run scripts, so the bubble stays ReelLog-branded for every film.
+       The per-film upgrade needs a server; see project notes.) -->
+  <meta property="og:title" content="ReelLog — Watch. Rate. Remember.">
+  <meta property="og:description" content="A film shared from ReelLog, the personal movie diary for iPhone.">
+  <meta property="og:image" content="https://reellog.app/og-image.png">
+  <meta property="og:url" content="https://reellog.app/film/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+
+  <link rel="stylesheet" href="../style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'%3E%3Cstyle%3E.r%7Bfill:%230e0e11%7D@media (prefers-color-scheme:dark)%7B.r%7Bfill:%23f2f2f4%7D%7D%3C/style%3E%3Cmask id='m'%3E%3Ccircle cx='512' cy='512' r='350' fill='white'/%3E%3Ccircle cx='512' cy='327' r='80' fill='black'/%3E%3Ccircle cx='687.9' cy='454.8' r='80' fill='black'/%3E%3Ccircle cx='620.8' cy='661.7' r='80' fill='black'/%3E%3Ccircle cx='403.2' cy='661.7' r='80' fill='black'/%3E%3Ccircle cx='336.1' cy='454.8' r='80' fill='black'/%3E%3Ccircle cx='512' cy='512' r='48' fill='black'/%3E%3C/mask%3E%3Crect class='r' width='1024' height='1024' mask='url(%23m)'/%3E%3C/svg%3E">
+
+  <style>
+    /* Film page only — everything else comes from style.css tokens. */
+    .film-hero {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 48px 24px calc(48px + 8vh);
+    }
+    .film-poster {
+      width: 180px;
+      aspect-ratio: 2 / 3;
+      border-radius: 10px;
+      background: var(--surface-elevated);
+      object-fit: cover;
+      margin-bottom: 24px;
+      display: none; /* shown once the poster loads */
+    }
+    .film-title {
+      color: var(--text-primary);
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      line-height: 1.2;
+      margin-bottom: 6px;
+    }
+    .film-meta {
+      color: var(--text-muted);
+      font-size: 15px;
+      margin-bottom: 32px;
+    }
+    .get-app {
+      display: inline-block;
+      background: var(--text-primary);
+      color: var(--background);
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 12px;
+      padding: 14px 28px;
+    }
+    .get-app:hover { text-decoration: none; }
+    .get-caption {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-top: 12px;
+    }
+    .film-attribution {
+      color: var(--text-muted);
+      font-size: 12px;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/privacy/">Privacy</a>
+      <a href="/support/">Support</a>
+    </nav>
+  </header>
+
+  <main class="film-hero">
+    <img class="film-poster" id="poster" alt="">
+    <h1 class="film-title" id="title">Shared from ReelLog</h1>
+    <p class="film-meta" id="meta">A personal movie diary for iPhone.</p>
+    <a class="get-app" href="GET_REELLOG_LINK">Get ReelLog</a>
+    <p class="get-caption">Watch. Rate. Remember.</p>
+    <p class="film-attribution" id="attribution" hidden>Film data from TMDB.</p>
+  </main>
+
+  <script>
+    // One page serves every film: the link carries the film's TMDB id
+    // (/film/?id=693134); this fills in that film's poster and title.
+    // If anything fails, the page simply stays the generic ReelLog pitch.
+    (function () {
+      var id = new URLSearchParams(location.search).get("id");
+      if (!/^\d+$/.test(id || "")) return;
+
+      // The publishable project key — public by design (it ships inside the
+      // app too); the movie service only answers a small read-only whitelist.
+      var KEY = "sb_publishable_YV5iTak5Nx0B1ZzTng_azQ_kEODJYFn";
+      fetch("https://kcxkixzjhsujaleagzie.supabase.co/functions/v1/tmdb/movie/" + id, {
+        headers: { apikey: KEY, Authorization: "Bearer " + KEY }
+      })
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function (film) {
+          if (!film || !film.title) return;
+          document.getElementById("title").textContent = film.title;
+          document.title = film.title + " — ReelLog";
+
+          var parts = [];
+          if (film.release_date) parts.push(film.release_date.slice(0, 4));
+          if (film.genres && film.genres.length) {
+            parts.push(film.genres.slice(0, 2).map(function (g) { return g.name; }).join(", "));
+          }
+          if (film.runtime) {
+            var h = Math.floor(film.runtime / 60), m = film.runtime % 60;
+            parts.push(h > 0 ? h + " h " + m + " min" : m + " min");
+          }
+          if (parts.length) document.getElementById("meta").textContent = parts.join(" · ");
+
+          if (film.poster_path) {
+            var poster = document.getElementById("poster");
+            poster.src = "https://image.tmdb.org/t/p/w500" + film.poster_path;
+            poster.alt = film.title + " poster";
+            poster.onload = function () { poster.style.display = "block"; };
+          }
+          document.getElementById("attribution").hidden = false;
+        })
+        .catch(function () { /* generic pitch stays — never a broken page */ });
+    })();
+  </script>
+</body>
+</html>
